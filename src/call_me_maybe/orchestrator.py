@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from .wrapper import Small_LLM_Model
 from .parser import DataParser
+from .vocabulary import VocabularyLoader
+from .schema import SchemasBuilder
 import numpy as np
 
 class EngineConfig(BaseModel):
@@ -11,15 +13,15 @@ class ModelOrchestrator:
   # def __init__(self, instance, config: EngineConfig) -> None:
   def __init__(self, prompt, instance, max_tokens) -> None:
     self.prompt = prompt
-    self.instance = instance
-    self.token_history: list[int] = []
+    self.model_wrapper = instance
     self.max_tokens = max_tokens
 
   def process_prompt(self) -> None:
-    encoded_initial_prompt = self.instance._encode(self.prompt)
+    encoded_initial_prompt = self.model_wrapper._encode(self.prompt)
+    self.token_history: list[int] = []
 
     for token in encoded_initial_prompt[0]:
-      self.token_history.append(token)
+        self.token_history.append(token)
 
   def create_schema(self, expected_output):
     #first, I need to create a json schema from a json dummy file
@@ -47,22 +49,29 @@ class ModelOrchestrator:
     # im STILL unsure of the usage of pydantic regarding this
       pass
 
-  def generate(self) -> None:
-    print("Current tokens ->", self.token_history)
-    next_logits = np.array(self.instance.get_logits_from_input_ids(self.token_history))
-    # selected_token, is_last_char = parser.get_valid_tokens(next_logits, schema)
-    selected_token = np.argmax(next_logits)
+  def generate(self) -> int:
+    # print("Current tokens ->", self.token_history)
+    next_logits = np.array(self.model_wrapper.get_logits_from_input_ids(self.token_history))
+    filtered_tokens = self.parser.get_valid_tokens(next_logits)
+    selected_token = np.argmax(filtered_tokens)
+    print("Selected token", selected_token)
     self.token_history.append(selected_token)
+    return selected_token
     # return is_last_char
 
   def answer_prompt(self) -> str:
-    self.process_prompt()
+        self.process_prompt()
+        vocabulary = VocabularyLoader(self.model_wrapper)
+        vocabulary.load_vocab()
+        vocab_list = vocabulary.get_vocab_array()
+        models = SchemasBuilder.build_schema('./data/input/functions_definition.json')
+        self.parser = DataParser(models, vocab_list)
+        # parser.advance_state('{"fn": "')
+        # parser.advance_state('fn_substitute_string_with_regex')
     # data_parser = DataParser(self.schema)
 
-    for _ in range(self.max_tokens):
-      self.generate()
-      # if self.generate():
-      #   break
-
-    decoded_str = self.instance._decode(self.token_history) 
-    return decoded_str
+        # while len(self.parser.state_queue) > 0:
+        #     current_token = self.generate()
+        #     self.parser.advance_state(self.model_wrapper._decode(current_token))
+        # decoded_str = self.model_wrapper._decode(self.token_history) 
+        # return decoded_str

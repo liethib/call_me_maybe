@@ -19,15 +19,17 @@ class SchemasBuilder:
       functions_definitions = json.load(functions_definitions)
     for function in functions_definitions:
       fields = {
-        "name":(Literal[function['fn_name']], Field(...))
+        "name":(Literal[function['fn_name']])
+        # "name":(Literal[function['fn_name']], Field(...))
       }
 
       # print("Raw function ->", function)
       for param_name, param_type in function['args_types'].items():
-        fields[param_name] = (param_type, Field(...))
+        fields[param_name] = (param_type)
+        # fields[param_name] = (param_type, Field(...))
       # fields['return_type'] = function['return_type']
 
       dynamic_models[function['fn_name']] = create_model(function['fn_name'], **fields)
-      # print(f"Model for {function['fn_name']}->", fields)
+      print(f"Model for {function['fn_name']}->", fields)
     # print("Dynamic ->", dynamic_models)
     return dynamic_models
