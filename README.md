@@ -1,24 +1,105 @@
-Multiple parts:
+*This activity has been created as part of the 42 curriculum by tvivier.*
 
-# Tokenize
-Split the prompt into tokens.
+# Description
+The goal of this project was to create a program that would, using a model, a list of available functions signatures and a list of prompts, implement function calling. Function calling is the opposite of traditional, 'conversational' LLM interaction : rather than having a humanly formatted answer, we instead get the tool that would achieve the given task, and how to use it (i.e parameters).
 
-# Tokens to ID
-Convert the tokens to numerical ID.
+Function calling is one of the concepts introduced in this project, as well as :
+- Constrained decoding
+- Logits and tokens statistics
+- Tokenization of strings using a vocabulary
+- Token selection using argmax and softmax values
+- JSON valid generation
+- Validating existing data with Pydantic
+- System prompting
+- Really not liking obscure models and rules
 
-# Token selection
-Using logits (the probability of the relevancy of the token), this is how/where we chose which token we want to use. By default, we tend to use the most probable token. But here, we use constrained decoding to alter the selection process.
-## Constrained Decoding
-The process of, when looking at the next token, only select those who respect the given conditions.
-Here, the conditions are :
-- Respecting the structure
-- Respecting the expected schema
+# Instructions
+To run the program, we can run `make`, which thanks to our makefile will run the following command :
+```bash
+uv sync, uv run python -m src -o data/output/function_calls.json -i data/input/function_calls.json -f data/input/functions_def.json
+```
 
-Filter those who do not fit.
+`sync` allows us to check and update dependecies based on the pyproject.toml file. Run simply runs the program.
 
-What does that mean here ? We created a Pydantic model, that describes how our output should look (ie, prompt, then function name, then function arguments), and use it as an output indication. In other LLMs, we can simply use the `output_type` and pass the model, I'm unsure this works in our case.
+We can specify arguments, as requested by the subject, in order to specify which inputs/outputs we want to use :
+```
+uv run python -m src
+-f path/to/functions_definitions.json
+-i path/to/prompts_to_parse.json
+-o path/to/output_file.json
+```
+These arguments have default values, which will be selected if none are provided.
 
-# Questions
-Is structured output the same as constrained decoding, but at a higher level ? How to implement constrained decoding with the given LLM ?
+# Resources
+- https://www.youtube.com/watch?v=gMeTK6zzaO4 -> This video demystified the concept. Much more was to be done, but it opened my ideas a bit.
+- https://www.youtube.com/watch?v=oJU6-qW6xZU -> Learned about softmax and exponents. Useless here (which I learned later on), but interesting
+- https://numpy.org/doc/stable/ -> Numpy's documentation, because I just started to use it. Very straightforward
+- https://www.youtube.com/watch?v=_d_Ka-ks2a0 -> Boolean masking with numpy.
 
-# 
+# Algorithm explanation
+The program is divided in three main parts :
+- The schema generation
+- The parsing
+- The logits selection
+
+The pipeline is as follows :
+We first create the first part of our schema. The schema is how we make sure that we output valid JSON. It's a simple python list, contaning multiple strings, whether stored in a tuple or in lists, that will "guide" our LLM to produce correct output. 
+
+The model then returns us, based on the prompt, the logits. There is one logit (which is a number between -infinity and infinity) which is the probability of selecting subwords. If we want to know the capital of France, the model will give us logits, and the logits for the 'Par' subword will probably have a higher logit than '89,'. Then, we apply a mask, saying we only want the subwords that would allow us to advance toward our current schema. This is called a **FSM (Finite state machine)**, which is a program whose behaviour will change based on the current state. 
+If our current state is to print the 'prompt' string, it will be easy enough : simply chose the subwords that match (so 'pro', 'pr', 'p'...).
+If our current state is a list, it means that we are giving the model a list of strings, the functions name. The model will 'choose' which function is the most relevant one, and other functions will be removed from the possibilities. Once a function is selected (all others are removed), we can generate the 2nd part of the schema : we check the expected parameters of the selected function and add them to our list, with correct JSON formatting.
+
+Then, we parse these arguments. This is the trickiest part, because we have little control over what the LLM will chose. What I did was removing certain tokens from the pool, but this needed to be done differently for each type : a string must accept double quotes (to know when our string ended), but we cannot allow double quotes for an int, only numbers, comma (to signal our value ended) and the minus sign. Since we generate using subwords and not by character, we have to realize our LLM will probably want to use tokens that would help our JSON structure, like finishing the string with `","` between two values. This is good, but less predictable : henceforth we also have to check if some 'important' characters such as `" , }` are generated by the model. In this case, we must alter the state queue accordingly, in order to avoid duplicates. This is major, because a model may want to push a certain subword (like `"}`) but NOT the one we actually need (`"`), and since we use logits (probabilities) to select the token, we may run into an infinite state (or hallucination, degenerancy and other fancy words).
+
+Regarding the token selection, I implemented a softmax calculation. This is not particularily useful in this case, since this calculation allows to get *actual* probabilities (all values are between 0 and 1, and adding them all up will sum up to 1). This is useful for what is called *temperature*, which is how certain we want our model to be, and will alter the way logits are calculated.
+
+# Design decisions
+I liked the approach of a state machine, because it behaves exactly how I would want a program to run when working with a strict, structured format. Simply using the system prompt to tell the model "I need exact JSON formatting" may help regarding the generation, by making the JSON mandatory characters more likely to appear. But this won't enforce anything at all. The state machine enforces the generation, and makes sure that we get rigorous, neat JSON output.
+
+It took me a while to understand how Pydantic was used, but I used it in three ways :
+- Making sure that the config passed to the orchestrator was correct
+- Checking the functions given are in a valid format (use `int` or `str` or `float` or `bool`...)
+- Testing the final output to see if it is actually JSON.
+
+# Performance analysis
+The program runs quite fast, as I made sure to use the fastest options to handle the enormous vocabulary. I used `numpy` arrays rather than lists to make iteration faster (at least I think) : the size of the arrays is static, so using an array is pretty relevant here. Then, we generate subwords, which means we have less iterations than characters. The iterations themselves are fairly efficient : once we get the logits, we pass through a few conditions depending on what state we're in. Then, we apply the correct mask and select the logit. Finally, we have one final check to see if the state is completed.
+The program still has to face an upward evolution regarding the performance : the bigger the prompt we create, the more tokens must be added. Each token is used for the logits calculation, so it starts to pile up once the token number gets higher. The amount of function matters : all the functions's signature are also fed to the model.
+
+# Challenges faced
+This project is a giant stupid whackamole game. Squash one bug and two more appears. SERIOUSLY.
+The token selection when working with unpredictable arguments was AWFUL. It would have been a lot easier if I only had to check character by character, but having to mask SPECIFIC subwords and not others, all to please our JSON overlord, was TEDIOUS. I've been struggling with this for a WEEK.
+
+Later note : the system prompty almost got me to quit. It is important to give context, to ease the token selection towards what we expect. If informed, the model will try to help us complete JSON. It's as much as a help as it is a detriment : calculating the permitted characters was a NIGHTMARE. I learned this demonic syntax :
+```python
+mask = np.char.find(vocab, '}') == -1
+```
+which allows us to mask (set to false) all the subwords containing our 2nd argument. It's very useful but TOO radical, which significantly impacts how the tokens are selected : the model then has to resort to tokens that should not be selected, causing loops, degenerancy and very annoying logs. So I don't result much in them, but they might have took me 4 days to properly understand the implications of chosing them.
+
+# Testing strategies
+I used various LLM (ironic) (Mistral, Gemini, ChatGPT) to create batches of functions and definitions, to test more types and functions. I also created some edge cases tests to see how the model would behave. It did terribly, but the JSON output was valid ! Most importantly, it also helped me grasp the idea of a what an FSM (Finite state machine, if you forgot) works, which exactly fitted how I initially wanted to solve the problem (but in OOP). I tried to focus the testing on the faulty prompts, and went a step further for each, in order to make sure that the model would output correct format, whatever might be thrown at it.
+
+
+# Example usage
+Create a function. Most of the fluff (even the description) is not required : we need a name and parameters in the `args_types` object.
+```json
+  {
+    "fn_name": "fn_to_uppercase",
+    "args_types": {
+      "text": "str"
+    }
+  }
+```
+
+Store it in a file, such as `functions_definition.json`.
+Then create a prompt (or a list of prompts) in JSON :
+```json
+{
+    "prompt": "Uppercase the string 'hello there'"
+}
+```
+Store it in a file too, let's say `functions_prompts.json`.
+Then run the script with
+`uv run src.call_me_maybe.main -i functions_prompts.json -f functions_definition.json`
+
+# Conclusion
+In the hope that someone reads the README : it's actually a pretty cool subject : it removes a bit of the magic behind the chatbot everybody seems to use these days. Knowing how a token is generated (this is still obscure), how it's then selected and how the selection can be done, it was an interesting thing to know and it lead to a lot of mathematical complications (with softmax and the tensors, which I wanted to figure out before realizing I don't need them). But I'm not sure how this type of constrained decoding would be useful, in an actual context. It's both low level and seems pretty specific. But what do I know ! Nonetheless, the project was cool (until the parameters/hallucination part), I like the idea of the state machine a lot. Hope that RAG is more fun tho.

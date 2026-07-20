@@ -1,7 +1,7 @@
 [project]
 name = "call-me-maybe"
 version = "0.1.0"
-description = "Function calling and fun maths to fall asleep to !"
+description = "Function calling and fun maths to fall asleep to ! (The second part is a lie.)"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -9,4 +9,7 @@ dependencies = [
     "pydantic>=2.13.4",
     "torch>=2.12.1",
     "transformers>=5.12.1",
+    "accelerate",
+    "mypy",
+    "flake8",
 ]
