@@ -20,21 +20,13 @@ class StringHandler(TypeHandler):
     def __init__(self, vocab: np.ndarray) -> None:
         self.non_last_mask = np.char.find(vocab, '"}') == -1
         self.last_mask = np.char.find(vocab, '",') == -1
-        self.no_leading_whitespace_mask = np.array(
-            [not s[:1].isspace() for s in vocab], 
-            dtype=bool
-        )
 
     def get_valid_tokens(self, vocab: np.ndarray,
                          current_buffer: str, is_last: bool = False)\
             -> Any:
         """Returns a mask with available characters,
          depending if it's the last argument or not."""
-        mask = self.last_mask if is_last else self.non_last_mask
-        if len(current_buffer) < 1:
-            return mask & self.no_leading_whitespace_mask
-
-        return mask
+        return self.last_mask if is_last else self.non_last_mask
 
     def is_complete(self, current_buffer: str, is_last: bool = False) -> bool:
         """Returns the boolean value whether the state is considered

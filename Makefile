@@ -1,5 +1,5 @@
-# EXTERNAL_VENV_PATH := /home/thib/testouille/.venv
-EXTERNAL_VENV_PATH := /goinfre/$(USER)/.venv
+EXTERNAL_VENV_PATH := /home/thib/testouille/.venv
+# EXTERNAL_VENV_PATH := /goinfre/$(USER)/.venv
 export UV_PROJECT_ENVIRONMENT = $(EXTERNAL_VENV_PATH)
 NAME = call_me_maybe
 ENTRYPOINT = src

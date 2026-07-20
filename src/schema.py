@@ -27,7 +27,8 @@ class SchemasBuilder:
             functions = json.load(f)
 
         # system_prompt = "Among the following functions, select the most relevant one from the user prompt, then enumerate the parameters according to the selected function signature. Strip the strings of whitespace in the parameters, but keep them as they are (Except for numbers and float who MUST have a floating value like 12.0)\n"
-        system_prompt = "Among the following functions, select the most relevant one from the user prompt, then enumerate the parameters according to the selected function signature. Strip the strings of whitespace in the parameters, but keep them as they are. Floats and number must have a floating value, strings end with double quotes and don't start with whitespace.\n"
+        system_prompt = "Among the following functions, select the most relevant one based on the user prompt. Extract the exact parameters required by the selected function's signature. Do not include leading or trailing whitespaces inside string parameters"
+        # system_prompt = "Among the following functions, select the most relevant one from the user prompt, then enumerate the parameters according to the selected function signature. Strip the strings of whitespace in the parameters, but keep them as they are. Floats and number must have a floating value, strings end with double quotes and don't start with whitespace.\n"
         # system_prompt = "You are a function-calling AI assistant. Your task is to: Analyze the user's request and determine which of the given functions would be the more relevant. Once the function is selected, fill the parameters according to the given function signature."
             # "is found, extract the function name and its arguments."
 
