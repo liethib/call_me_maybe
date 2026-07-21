@@ -9,12 +9,12 @@ class VocabularyLoader:
         self.vocab_path = ""
 
     def load_vocab(self) -> None:
-        with open(self.wrapper_instance.get_path_to_vocabulary_json(),
+        with open(self.wrapper_instance.get_path_to_vocab_file(),
                   'r') as vocab_file:
             vocab_dict = json.load(vocab_file)
 
         vocab_strings_list = sorted(vocab_dict, key=vocab_dict.get)
-        encoded = self.wrapper_instance._encode("Test")
+        encoded = self.wrapper_instance.encode("Test")
         tensor_list = []
         for token in encoded[0]:
             tensor_list.append(token)

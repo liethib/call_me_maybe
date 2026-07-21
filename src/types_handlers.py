@@ -35,9 +35,10 @@ class StringHandler(TypeHandler):
             return False
         trimmed_buffer = current_buffer.rstrip()
         if is_last:
-            return trimmed_buffer.endswith('"') or trimmed_buffer.endswith('"}}')
-        return trimmed_buffer.endswith('"') or trimmed_buffer.endswith('",')
-            # or trimmed_buffer.endswith('}')
+            return trimmed_buffer.endswith('"') or \
+                trimmed_buffer.endswith('"}}')
+        return trimmed_buffer.endswith('"') or \
+            trimmed_buffer.endswith('",')
 
 
 class IntHandler(TypeHandler):

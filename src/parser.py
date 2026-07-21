@@ -1,5 +1,4 @@
 import numpy as np
-import re
 from typing import Any
 from .types_handlers import (StringHandler,
                              IntHandler,
@@ -82,7 +81,7 @@ class DataParser:
         for character in token_string:
             if character == '"':
                 self.double_quotes_counter += 1
-        print("Current char ->", token_string, "required ->", current_req)
+        # print("Current char ->", token_string, "required ->", current_req)
         if isinstance(current_req, list):
             if self.current_buffer in current_req:
                 self.state_queue.pop(0)

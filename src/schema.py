@@ -1,5 +1,4 @@
 from pydantic import BaseModel, ValidationError
-from pathlib import Path
 from typing import Literal, Dict
 import json
 
@@ -26,23 +25,27 @@ class SchemasBuilder:
         with open(func_path) as f:
             functions = json.load(f)
 
-        # system_prompt = "Among the following functions, select the most relevant one from the user prompt, then enumerate the parameters according to the selected function signature. Strip the strings of whitespace in the parameters, but keep them as they are (Except for numbers and float who MUST have a floating value like 12.0)\n"
-        system_prompt = "Among the following functions, select the most relevant one based on the user prompt. Extract the parameters (verbatim for strings parameters) required by the selected function's signature. If of float or of numbers types add a floating value. Do not include leading or trailing whitespaces inside string parameters"
-        # system_prompt = "Among the following functions, select the most relevant one from the user prompt, then enumerate the parameters according to the selected function signature. Strip the strings of whitespace in the parameters, but keep them as they are. Floats and number must have a floating value, strings end with double quotes and don't start with whitespace.\n"
-        # system_prompt = "You are a function-calling AI assistant. Your task is to: Analyze the user's request and determine which of the given functions would be the more relevant. Once the function is selected, fill the parameters according to the given function signature."
-            # "is found, extract the function name and its arguments."
+        system_prompt = "Among the following functions, select the most \
+                        relevant one based on the user prompt. Extract \
+                        the parameters (verbatim for strings parameters)\
+                         required by the selected function's signature. \
+                         If of float or of numbers types add a floating \
+                         value. Do not include leading or trailing \
+                         whitespaces inside string parameters"
 
         for func in functions:
             fn_name = func.get('name')
             desc = func.get('description', '')
             parameters = func.get('parameters', {})
-            param_strings = [f"{k}: {v.get('type')}" for k, v in parameters.items()]
+            param_strings = [f"{k}: {v.get('type')}"
+                             for k, v in parameters.items()]
             params_formatted = ", ".join(param_strings)
 
             system_prompt += f"- {fn_name}({params_formatted}) - {desc}\n"
-            # system_prompt += f"- {fn_name}({params_formatted})\n"
-        system_prompt += 'Example : User: "Turn \"Hello there {person} !\" to uppercase with placeholders" -> OUtput : {"name": "fn_to_uppercase_with_placeholders","parameters":{"string": "Hello there {person} !}}'
-        # system_prompt += 'Example : User: } Output: {"name": "fn_format_template", "parameters": {"template": "Say \\\"hello\\\" to {name}"}}'
+        system_prompt += 'Example : User: "Turn \"Hello there {person} !\" to \
+        uppercase with placeholders" -> OUtput : {"name": \
+        "fn_to_uppercase_with_placeholders","parameters":{"string": \
+        "Hello there {person} !}}'
         return system_prompt + "\nUser:"
 
     @staticmethod

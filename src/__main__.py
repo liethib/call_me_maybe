@@ -13,30 +13,23 @@ def main() -> None:
 
     # prompt = input("What do you want to get from the model ?")
     # config = EngineConfig("Say hello back", 50)
-    try:
-        model_wrapper = Wrapper()
-        print("Current output file ->", output_path)
-        with open(output_path, 'w') as file:
-            file.write('[')
-        with open(output_path, 'a') as file:
-            for prompt in formatted_prompts:
-                if prompt != formatted_prompts[0]:
-                    file.write(',')
-                config = EngineConfig(
-                    prompt=prompt['prompt'],
-                    max_tokens=100,
-                    functions_path=functions_definition_path
-                )
-                new_model = ModelOrchestrator(config, model_wrapper)
-                prompt_answer = new_model.answer_prompt()
-                file.write(prompt_answer.strip())
-            file.write(']')
-    except ValidationError as e:
-        print("Error with the configuration", e)
-    except ValueError as e:
-        print("Error calculating logits", e)
-    except Exception as e:
-        print("An unexpected error happened :", e)
+    model_wrapper = Wrapper()
+    print("Current output file ->", output_path)
+    with open(output_path, 'w') as file:
+        file.write('[')
+    with open(output_path, 'a') as file:
+        for prompt in formatted_prompts:
+            if prompt != formatted_prompts[0]:
+                file.write(',')
+            config = EngineConfig(
+                prompt=prompt['prompt'],
+                max_tokens=100,
+                functions_path=functions_definition_path
+            )
+            new_model = ModelOrchestrator(config, model_wrapper)
+            prompt_answer = new_model.answer_prompt()
+            file.write(prompt_answer.strip())
+        file.write(']')
 
     with open(output_path, "r") as file:
         data = json.load(file)
@@ -45,4 +38,13 @@ def main() -> None:
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except json.JSONDecodeError as e:
+        print("JSON_ERROR: One of the files is not valid JSON :", e)
+    except ValidationError as e:
+        print("Error with the configuration", e)
+    except ValueError as e:
+        print("Error calculating logits", e)
+    except Exception as e:
+        print("An unexpected error happened :", e.__class__.__name__, e)

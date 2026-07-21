@@ -1,5 +1,5 @@
-EXTERNAL_VENV_PATH := /home/thib/testouille/.venv
-# EXTERNAL_VENV_PATH := /goinfre/$(USER)/.venv
+# EXTERNAL_VENV_PATH := /home/thib/testouille/.venv
+EXTERNAL_VENV_PATH := /goinfre/$(USER)/.venv
 export UV_PROJECT_ENVIRONMENT = $(EXTERNAL_VENV_PATH)
 NAME = call_me_maybe
 ENTRYPOINT = src
@@ -38,7 +38,3 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-
-moulinette: install
-	uv run python -m moulinette/moulinette prepare_exercises --set private
-	uv run python -m moulinette/moulinette grade_student_answers --set private --student_answer_path $(DATA_OUTPUT_DIR)/function_calling_results.json

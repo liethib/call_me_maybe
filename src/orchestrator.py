@@ -29,7 +29,8 @@ class EngineConfig(BaseModel):
 def build_verifier(fn_name: str, params: dict[str, str]) -> type[BaseModel]:
     """Checks the types of the functions
     to check that the signatures are correct."""
-    type_map = {'string': str, 'integer': int, 'number': float, 'float': float, 'boolean': bool}
+    type_map = {'string': str, 'integer': int,
+                'number': float, 'float': float, 'boolean': bool}
     field_defs: dict[str, Any] = {name: (type_map[ptype], ...)
                                   for name, ptype in params.items()}
     return create_model(fn_name, **field_defs)
@@ -49,12 +50,12 @@ class ModelOrchestrator:
         """Creates the token history for the user and system prompt,
         creating the initial token list."""
         self.prompt += '\nAnswer :'
-        encoded_initial_prompt = self.model_wrapper._encode(self.prompt)
+        encoded_initial_prompt = self.model_wrapper.encode(self.prompt)
         print("Current path for functions =>", self.functions_path)
         if len(self.system_prompt) == 0:
             self.models, self.system_prompt = SchemasBuilder.build_schema(
                 self.functions_path)
-            self.encoded_system_prompt = self.model_wrapper._encode(
+            self.encoded_system_prompt = self.model_wrapper.encode(
                 "System: " + self.system_prompt)
         self.token_history: list[int] = list(self.encoded_system_prompt[0])
 
@@ -93,13 +94,10 @@ class ModelOrchestrator:
         self.parser = DataParser(self.models, self.vocab_list, self.prompt)
         while len(self.parser.state_queue) > 0:
             current_token = self.generate()
-            decoded = self.model_wrapper._decode(current_token)
+            decoded = self.model_wrapper.decode(current_token)
             self.parser.advance_state(decoded)
-        decoded_str = self.model_wrapper._decode(
-            self.token_history[len(self.encoded_system_prompt[0]):])
-            # self.token_history)
-        print("Full system prompt :", self.model_wrapper._decode(
-            self.token_history))
+        decoded_str = self.model_wrapper.decode(
+                self.token_history[len(self.encoded_system_prompt[0]):])
         fixed_string = decoded_str[len(self.prompt):]
         fixed_string = fixed_string.replace(':" ', ':"')
         parsed = json.loads(fixed_string)
@@ -108,9 +106,9 @@ class ModelOrchestrator:
             "name": parsed["name"],
             "parameters": parsed["parameters"],
         }
-        print("Ordered ->", ordered)
+        # print("Ordered ->", ordered)
         final_output = json.dumps(ordered)
-        print("Final ->", final_output)
+        # print("Final ->", final_output)
         Verifier = build_verifier(parsed["name"], self.models[parsed["name"]])
         try:
             Verifier(**parsed["parameters"])
