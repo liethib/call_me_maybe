@@ -101,7 +101,7 @@ class ModelOrchestrator:
         print("Full system prompt :", self.model_wrapper._decode(
             self.token_history))
         fixed_string = decoded_str[len(self.prompt):]
-        fixed_string = fixed_string.replace('" ', '"')
+        fixed_string = fixed_string.replace(':" ', ':"')
         parsed = json.loads(fixed_string)
         ordered = {
             "prompt": self.prompt[:len(self.prompt) - 9],
