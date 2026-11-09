@@ -30,6 +30,9 @@ def flag_parser(args: list) -> tuple[str, str, str]:
     values_set = {'i': 0, 'f': 0, 'o': 0}
 
     try:
+        if not os.path.exists('./data/output'):
+            print("Directory output created.")
+            os.makedirs('./data/output')
         for i, arg in enumerate(args[1:]):
             if arg == '--input' or arg == '-i' and values_set['i'] == 0:
                 input_path = args[i + 2]

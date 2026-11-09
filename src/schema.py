@@ -30,8 +30,8 @@ class SchemasBuilder:
                         the parameters (verbatim for strings parameters)\
                          required by the selected function's signature. \
                          If of float or of numbers types add a floating \
-                         value. Do not include leading or trailing \
-                         whitespaces inside string parameters"
+                         value (even if negative). Do not include leading \
+                         or trailing whitespaces inside string parameters"
 
         for func in functions:
             fn_name = func.get('name')

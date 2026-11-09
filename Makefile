@@ -15,8 +15,6 @@ all: run
 install:
 	uv sync
 	cp ./llm_sdk/__init__.py  $(PROJECT)/wrapper.py 
-	if ! [ -d $(DATA_OUTPUT_DIR) ]; then mkdir $(DATA_OUTPUT_DIR); fi
-	# mkdir $(DATA_OUTPUT_DIR)
 
 run:	install
 	uv run python -m $(ENTRYPOINT)
@@ -38,3 +36,4 @@ clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
+	if [ -f $(PROJECT)/wrapper.py ]; then rm $(PROJECT)/wrapper.py; fi

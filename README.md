@@ -16,10 +16,11 @@ Function calling is one of the concepts introduced in this project, as well as :
 # Instructions
 To run the program, we can run `make`, which thanks to our makefile will run the following command :
 ```bash
+make # or make run
 uv sync, uv run python -m src -o data/output/function_calls.json -i data/input/function_calls.json -f data/input/functions_def.json
 ```
 
-`sync` allows us to check and update dependecies based on the pyproject.toml file. Run simply runs the program.
+`install` allows us to check and update dependecies based on the pyproject.toml file. Run simply runs the program.
 
 We can specify arguments, as requested by the subject, in order to specify which inputs/outputs we want to use :
 ```
